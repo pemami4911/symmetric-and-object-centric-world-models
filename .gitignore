@@ -1,0 +1,5 @@
+experiments/results
+experiments/tb
+experiments/weights
+experiments/runs
+lib/__pycache__
