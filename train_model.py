@@ -9,7 +9,7 @@ from sacred import Experiment
 from lib.datasets import ds
 from lib.datasets import SequentialHdF5Dataset
 from lib.model import net
-from lib.model import SDVAE, VRNN 
+from lib.model import WorldModel, VRNN 
 from lib.geco import GECO
 from lib.metrics import compute_video_psnr_and_ssim
 from lib.visualization import plot_per_frame_metric
@@ -53,6 +53,7 @@ def cfg():
             'val_batch_size': 8,  # validation mini-batch size
             'val_rollouts': 64,  # number of random rollouts for eval
             'val_freq': 25000  # eval every % steps,
+            'out_dir': ''
         }
 
 
@@ -68,8 +69,8 @@ def save_checkpoint(step, model, model_opt, filepath):
 def restore_from_checkpoint(training, checkpoint):
     state = torch.load(checkpoint)
     num_gpus = torch.cuda.device_count()
-    if training['model'] == 'SDVAE':
-        model = SDVAE(batch_size=(training['batch_size'] // num_gpus), context_len=training['context_len'])
+    if training['model'] == 'Ours' or training['model'] == 'OP3':
+        model = WorldModel(batch_size=(training['batch_size'] // num_gpus), context_len=training['context_len'])
     elif training['model'] == 'VRNN':
         model = VRNN(batch_size=(training['batch_size'] // num_gpus), context_len=training['context_len'])
 
@@ -103,9 +104,9 @@ def get_curriculum_seq_len_and_batch(cur_step, curriculum_lengths,
 @ex.automain
 def run(training, seed):
     # maybe create
-    run_dir = Path('experiments', 'runs')
-    checkpoint_dir = Path('experiments', 'weights')
-    tb_dir = Path('experiments', 'tb')
+    run_dir = Path(training['out_dir'], 'experiments', 'runs')
+    checkpoint_dir = Path(training['out_dir'], 'experiments', 'weights')
+    tb_dir = Path(training['out_dir'], 'experiments', 'tb')
     for dir_ in [run_dir, checkpoint_dir, tb_dir]:
         if not dir_.exists():
             dir_.mkdir()
@@ -127,8 +128,8 @@ def run(training, seed):
 
     if not training['load_from_checkpoint']:
         # Models
-        if training['model'] == 'SDVAE':
-            model = SDVAE(batch_size=(training['batch_size'] // num_gpus), context_len=training['context_len'])
+        if training['model'] == 'Ours' or training['model'] == 'OP3':
+            model = WorldModel(batch_size=(training['batch_size'] // num_gpus), context_len=training['context_len'])
         elif training['model'] == 'VRNN':
             model = VRNN(batch_size=(training['batch_size'] // num_gpus), context_len=training['context_len'])
         # Optimization
@@ -260,21 +261,7 @@ def run(training, seed):
                 #display = []
                 val_idx = 0
                 for batch in tqdm(val_dataloader):
-                    img_batch = batch['imgs'].to('cuda')
-                    seq_start = 0
-                    #if (training['seq_len'] > max_seq_len) and training['random_seq_start']:
-                    #    seq_start = np.random.randint(0, training['seq_len']-max_seq_len)
-                    if 'flow' in batch:
-                        flow_batch = batch['flow'].to('cuda')
-                        flow_batch = flow_batch[:,seq_start : seq_start + max_seq_len]
-                        # we have to skip the first image which has no flow in this case
-                        if seq_start == 0:
-                            seq_start += 1
-                    else:
-                        flow_batch = None
-                    
-                    img_batch = img_batch[:,seq_start:seq_start + max_seq_len]
-                    time_steps = torch.arange(seq_start,seq_start+max_seq_len).to('cuda').unsqueeze(0).repeat(num_gpus,1)
+                    img_batch = batch['imgs'].to('cuda')                    
 
                     if 'actions' in batch:
                         action_batch = batch['actions'].to('cuda')
@@ -282,7 +269,7 @@ def run(training, seed):
                     else:
                         action_batch = None
                     
-                    out_dict = model(img_batch, action_batch, model_geco, step, time_steps, flow_batch)
+                    out_dict = model(img_batch, action_batch, model_geco, step)
                     
                     if training['model'] == 'VRNN':
                         batched_generated_video = np.stack([_.data.cpu().numpy() for _ in out_dict['x_means']])

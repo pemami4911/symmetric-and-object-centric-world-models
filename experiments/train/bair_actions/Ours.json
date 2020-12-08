@@ -20,7 +20,6 @@
     "refinenet_channels_in": 13,
     "refinenet_conv_size": 5,
     "z_size": 64,
-    "iterative_VI_projection": false,
     "separate_variances": true,
     "iterative_inference_schedule": [4,2],
     "ssm": "Ours",
@@ -28,7 +27,7 @@
   },
   "dataset": {
     "actions": true,
-    "data_path": "C:\\icml2020",
+    "data_path": "",
     "h5_path": "towel_pick_30k_64x64.h5",
     "labels": false,
     "masks": false,
@@ -38,7 +37,7 @@
   "training": {
     "batch_size": 16,
     "checkpoint": "",
-    "checkpoint_freq": 10000,
+    "checkpoint_freq": 25000,
     "context_len": 2,
     "curriculum_batch_sizes": [
       16,
@@ -70,20 +69,21 @@
     "second_dataset": "",
     "geco_beta_stepsize": 1e-06,
     "geco_ema_alpha": 0.99,
-    "geco_reconstruction_target": -7100,
+    "geco_reconstruction_target": -26000,
     "iters": 500000,
     "load_from_checkpoint": false,
     "lr": 0.0003,
-    "model": "SDVAE",
+    "model": "Ours",
     "num_workers": 8,
     "random_seq_start": true,
-    "run_suffix": "SDVAE-BAIR-full",
+    "run_suffix": "Ours-BAIR",
     "seq_len": 10,
     "tensorboard_delete_prev": false,
     "tensorboard_freq": 100,
     "use_curriculum": true,
     "val_batch_size": 8,
     "val_freq": 25000,
-    "val_rollouts": 16 
+    "val_rollouts": 16,
+    "out_dir":  ""
   }
 }

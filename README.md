@@ -1,9 +1,9 @@
 # symmetric-and-object-centric-world-models
-Code accompanying "A Symmetric and Object-Centric World Model for Stochastic Environments" (LINK HERE)
+Code accompanying "A Symmetric and Object-Centric World Model for Stochastic Environments" [[pdf](https://github.com/orlrworkshop/orlrworkshop.github.io/blob/master/pdf/ORLR_3.pdf)]
 
 ## Installation
 
-The following scripts will create the `multi-object` conda environment (assuming a Linux environment) and CUDA 10.0.
+The following will create the `multi-object` conda environment (assuming Linux and CUDA 10.0).
 
 ```
 $ conda env create -f environment.yml
@@ -11,59 +11,59 @@ $ conda env create -f environment.yml
 
 ## Data
 
-Download each dataset [from here](https://doi.org/10.5281/zenodo.3673897) and store in a desired folder.
+Download the BAIR Towel Pick 30k data as an h5py file [from here](https://www.dropbox.com/s/bodzlbzrzduxagn/towel_pick_30k_64x64.h5?dl=0) and store in a desired folder.
 
 ## Experiments
 
 ### Training
 
-JSON configurations for training the models for each experiment are organized like so:
+JSON configuration files for training the models are organized like so:
 
 ```
 experiments/
 ----train/
---------moving_sprites/
-------------SDVAE.json
-------------SDVAE_DaVOS.json
-------------VRNN.json
-------------VRNN_star.json
-------------OP3.json
---------bair_action_free/
 --------bair_actions/
---------planning/
-----test/
+------------Ours.json
+------------VRNN.json
+------------OP3.json
+----eval/
+--------bair_actions/
+------------accuracy/
+----------------Ours.json
+----------------VRNN.json
+----------------OP3.json
 ```
 
 To check the configuration, run
 ```
-$ python train_model.py print_config with experiments/train/bair_action_free/SDVAE.json dataset.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA
+$ python train_model.py print_config with experiments/train/bair_actions/Ours.json dataset.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA training.out_dir=PATH_WHERE_YOU_STORE_OUTPUTS
 ```
 
-Train a model with the following, setting the number of GPUs with `CUDA_VISIBLE_DEVICES`:
+Train a model with the following, setting the number of GPUs with `CUDA_VISIBLE_DEVICES` (shown here with 2):
 ```
-$ CUDA_VISIBLE_DEVICES=0,1 python train_model.py with experiments/train/bair_action_free/SDVAE.json dataset.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA --file_storage ./experiments/runs
+$ CUDA_VISIBLE_DEVICES=0,1 python train_model.py with experiments/train/bair_actions/Ours.json dataset.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA training.out_dir=PATH_WHERE_YOU_STORE_OUTPUTS seed=YOUR_SEED --file_storage PATH_WHERE_YOU_STORE_OUTPUTS/experiments/runs
 ```
 
-`sacred` run logs are saved under `./experiments/runs`. Model checkpoints are stored in `./experiments/weights`.
+`sacred` run logs are saved under `PATH_WHERE_YOU_STORE_OUTPUTS/experiments/runs`. Model checkpoints are stored in `PATH_WHERE_YOU_STORE_OUTPUTS/experiments/weights`.
 
 #### Visualization
 
-Monitor training progress with tensorboard. The tensorboard logdir is `./experiments/tb`. Hence, run
+Monitor training progress with tensorboard. The tensorboard logdir is `PATH_WHERE_YOU_STORE_OUTPUTS/experiments/tb`. Hence, run
 ```
-tensorboard --logdir ./experiments/tb
+tensorboard --logdir PATH_WHERE_YOU_STORE_OUTPUTS/experiments/tb
 ```
 and navigate to `localhost:6006` in your browser.
 
 ### Evaluation
 
-We use a similar approach for evaluating the trained models
+We use a similar approach for evaluating the trained models, e.g., for computing the accuracy metrics (PSNR/SSIM).
 
 #### Accuracy
 
 Example:
 
 ```
-$ CUDA_VISIBLE_DEVICES=0 python eval_model.py with experiments/test/bair_action_free/accuracy/SDVAE_DaVOS.json datasets.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA
+$ CUDA_VISIBLE_DEVICES=0 python eval_model.py with experiments/test/bair_actions/accuracy/Ours.json datasets.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA out_dir=PATH_WHERE_YOU_STORE_OUTPUTS
 ```
 
 #### Diversity/Realism
@@ -71,7 +71,7 @@ $ CUDA_VISIBLE_DEVICES=0 python eval_model.py with experiments/test/bair_action_
 We generate an .h5 file to process with the FVD jupyter notebook to compute diversity/realism metrics.
 For example,
 ```
-$ CUDA_VISIBLE_DEVICES=0 python generate_videos.py with experiments/test/bair_action_free/diversity/SDVAE_DaVOS.json datasets.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA
+$ CUDA_VISIBLE_DEVICES=0 python generate_videos.py with experiments/test/bair_actions/diversity/Ours.json datasets.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA out_dir=PATH_WHERE_YOU_STORE_OUTPUTS
 ```
 
-The .h5 file will be located under `./experiments/results/BAIR-action-free-diversity/$CHECKPOINT_NAME-seed=$SEED/videos-diversity.h5`
+The .h5 file will be located under `PATH_WHERE_YOU_STORE_OUTPUTS/experiments/results/BAIR-actions-diversity/$CHECKPOINT_NAME-seed=$SEED/videos-diversity.h5`

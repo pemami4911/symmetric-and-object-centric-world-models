@@ -1,0 +1,77 @@
+{
+    "Net": {
+      "action_conditional_dynamics": true,
+      "action_dim": 4,
+      "action_shift": 1,
+      "action_noise": 0.05,
+      "conv_channels": 32,
+      "geco_warm_start": 1000,
+      "input_size": [
+        3,
+        64,
+        64
+      ],
+      "kl_beta": 1,
+      "log_scale": -1.20397280433,
+      "lstm_dim": 128,
+      "z_size": 64 
+    },
+    "dataset": {
+      "actions": true,
+      "data_path": "",
+      "h5_path": "towel_pick_30k_64x64.h5",
+      "labels": false,
+      "masks": false,
+      "halve_images": false
+    },
+    "seed": 1,
+    "training": {
+      "batch_size": 16,
+      "checkpoint": "",
+      "checkpoint_freq": 25000,
+      "context_len": 2,
+      "curriculum_batch_sizes": [
+        16,
+        10,
+        10,
+        10
+      ],
+      "curriculum_iters": [
+        200000,
+        250000,
+        300000,
+        350000
+      ],
+      "curriculum_lengths": [
+        3,
+        5,
+        7,
+        10
+      ],
+      "curriculum_geco": [
+        -14500, -14500, -14500, -14500
+      ],
+      "curriculum_inference": [
+          "", "", "", ""
+      ],
+      "geco_beta_stepsize": 1e-06,
+      "geco_ema_alpha": 0.99,
+      "geco_reconstruction_target": 0,
+      "iters": 500000,
+      "load_from_checkpoint": false,
+      "lr": 0.0003,
+      "model": "VRNN",
+      "num_workers": 8,
+      "random_seq_start": false,
+      "run_suffix": "VRNN-BAIR",
+      "seq_len": 10,
+      "tensorboard_delete_prev": false,
+      "tensorboard_freq": 100,
+      "use_curriculum": true,
+      "val_batch_size": 8,
+      "val_freq": 25000,
+      "val_rollouts": 16,
+      "out_dir": ""
+    }
+  }
+  

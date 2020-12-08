@@ -22,7 +22,6 @@ def cfg():
     bg_log_scale = math.log(0.09)
     refinenet_channels_in = 17
     refinenet_conv_size = 5
-    iterative_VI_projection = True
     separate_variances = True
     lstm_dim = 128
     conv_channels = 32
@@ -217,18 +216,11 @@ class RelationalDynamics(nn.Module):
 
 class RefinementNetwork(nn.Module):
     @net.capture
-    def __init__(self, z_size, input_size, refinenet_channels_in, refinenet_conv_size, conv_channels, lstm_dim, iterative_VI_projection):
+    def __init__(self, z_size, input_size, refinenet_channels_in, refinenet_conv_size, conv_channels, lstm_dim):
         super(RefinementNetwork, self).__init__()
         self.input_size = input_size
         self.z_size = z_size
-
-        self.projection = iterative_VI_projection
-        if self.projection:
-            # 1x1 Conv channel compression
-            self.projection_layer = nn.Conv2d(refinenet_channels_in, 3, 1, 1)
-            new_channels_in = 3
-        else:
-            new_channels_in = refinenet_channels_in
+        new_channels_in = refinenet_channels_in
 
         if refinenet_conv_size == 5:
             self.conv = nn.Sequential(
@@ -272,8 +264,6 @@ class RefinementNetwork(nn.Module):
         img_inputs: [N * K, C, H, W]
         vec_inputs: [N * K, 4*z_size]
         """
-        if self.projection:
-            img_inputs = self.projection_layer(img_inputs)
         x = self.conv(img_inputs)
         # concat with \lambda and \nabla \lambda
         x = torch.cat([x, vec_inputs], 1)
@@ -415,7 +405,7 @@ def refinenet_sequential_inputs(image, means, masks, mask_logits, log_p_k, norma
     return image_inputs.view(N * K, -1, H, W), vec_inputs
 
 
-class SDVAE(nn.Module):
+class WorldModel(nn.Module):
     """
     iterative_inference_schedule: List of length T containing number of iterative inference steps to use per time step
     time_inference_schedule: List of length T specifying whether to use "L" (L.O.) or "M" (MoN) (e.g., ["L","M","L",...,"M"])
@@ -425,8 +415,8 @@ class SDVAE(nn.Module):
     def __init__(self, z_size, input_size, K, batch_size, log_scale, bg_log_scale,
             lstm_dim, iterative_inference_schedule, time_inference_schedule, kl_beta, stochastic_samples, 
             geco_warm_start, action_dim, action_conditional_dynamics, ssm, dynamics_uncertainty,
-            context_len, iterative_VI_projection, separate_variances, action_shift, action_noise):
-        super(SDVAE, self).__init__()
+            context_len, separate_variances, action_shift, action_noise):
+        super(WorldModel, self).__init__()
         self.context_len = context_len
         self.z_size = z_size
         self.input_size = input_size
@@ -465,8 +455,6 @@ class SDVAE(nn.Module):
         init_weights(self.refine_net, 'xavier')
         init_weights(self.relational_dynamics, 'xavier')
         
-        self.foreground_K = self.K
-
         self.lamda_0 = nn.Parameter(torch.cat([\
                 torch.zeros(1, self.z_size), torch.ones(1, self.z_size)],1))
 
@@ -513,7 +501,7 @@ class SDVAE(nn.Module):
         if seq_step == 0:
             assert not torch.isnan(self.lamda_0).any(), 'lambda_0 has nan'
                 # expand lambda_0
-            lamda_0 = self.lamda_0.repeat(self.batch_size*self.foreground_K,1) # [N*K, 2*z_size]
+            lamda_0 = self.lamda_0.repeat(self.batch_size*self.K,1) # [N*K, 2*z_size]
             deterministic_state = current_recurrent_states['n_step_dynamics']['h']
             prior_z = std_mvn(shape=[self.batch_size * self.K, self.z_size], device=x_t.device)
         else:
