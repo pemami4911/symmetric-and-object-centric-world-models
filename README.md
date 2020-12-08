@@ -65,13 +65,14 @@ Example:
 ```
 $ CUDA_VISIBLE_DEVICES=0 python eval_model.py with experiments/test/bair_actions/accuracy/Ours.json datasets.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA out_dir=PATH_WHERE_YOU_STORE_OUTPUTS
 ```
+#### Realism
 
-#### Diversity/Realism
+We generate an .h5 file to process with the FVD jupyter notebook to compute the realism metric. First make sure to create 5 ground truth video sample populations. Change `store_ground_truth` to `true` in `experiments/test/bair_actions/realism/Ours.json` and run with 5 different random seeds.
 
-We generate an .h5 file to process with the FVD jupyter notebook to compute diversity/realism metrics.
-For example,
+Then,
 ```
-$ CUDA_VISIBLE_DEVICES=0 python generate_videos.py with experiments/test/bair_actions/diversity/Ours.json datasets.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA out_dir=PATH_WHERE_YOU_STORE_OUTPUTS
+$ CUDA_VISIBLE_DEVICES=0 python generate_videos.py with experiments/test/bair_actions/realism/Ours.json datasets.data_path=PATH_WHERE_YOU_DOWNLOADED_DATA out_dir=PATH_WHERE_YOU_STORE_OUTPUTS seed=1000
 ```
+#### Diversity
 
-The .h5 file will be located under `PATH_WHERE_YOU_STORE_OUTPUTS/experiments/results/BAIR-actions-diversity/$CHECKPOINT_NAME-seed=$SEED/videos-diversity.h5`
+We compute this by loading the results from the accuracy evaluation and computing the difference in the average SSIM over the 100 rollouts per video.
