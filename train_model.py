@@ -52,7 +52,7 @@ def cfg():
             'random_seq_start': False,  # if False, start training seqs at frame 0
             'val_batch_size': 8,  # validation mini-batch size
             'val_rollouts': 64,  # number of random rollouts for eval
-            'val_freq': 25000  # eval every % steps,
+            'val_freq': 25000,  # eval every % steps
             'out_dir': ''
         }
 
