@@ -1,6 +1,8 @@
 # symmetric-and-object-centric-world-models
 Code accompanying "A Symmetric and Object-Centric World Model for Stochastic Environments" [[pdf](https://github.com/orlrworkshop/orlrworkshop.github.io/blob/master/pdf/ORLR_3.pdf)]
 
+[[Video demos](https://pemami4911.github.io/blog/2020/12/08/symmetric-and-object-centric-world-models.html)]
+
 ## Installation
 
 The following will create the `multi-object` conda environment (assuming Linux and CUDA 10.0).
